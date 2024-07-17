@@ -27,3 +27,5 @@ if (-not $env:POSTMAN_API_KEY -or -not $env:POSTMAN_COLLECTION) {
 
 postman login --with-api-key $env:POSTMAN_API_KEY
 postman collection run $env:POSTMAN_COLLECTION
+
+
