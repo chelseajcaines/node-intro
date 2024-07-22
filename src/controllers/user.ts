@@ -58,3 +58,24 @@ export const getUser = (req: Request, res: Response) => {
 
   return res.status(200).json(rest.success(user))
 }
+
+export const updateUser = (req: Request, res: Response) => {
+  const { error, value } = UserSchema.validate(req.body);
+  if (error !== undefined) {
+    return res.status(400).json(rest.error('User data is not formatted correctly'));
+  }
+
+  const id = parseInt(req.params.id);
+  if (Number.isNaN(id)) {
+    return res.status(400).json(rest.error('Invalid user ID'));
+  }
+
+  const userIndex = DEMO_USERS.findIndex(u => u.id === id);
+  if (userIndex === -1) {
+    return res.status(404).json(rest.error('User not found'));
+  }
+
+  DEMO_USERS[userIndex] = { ...DEMO_USERS[userIndex], ...value };
+
+  return res.status(200).json(rest.success(DEMO_USERS[userIndex]));
+};

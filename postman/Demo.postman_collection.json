@@ -7,7 +7,7 @@
 	},
 	"item": [
 		{
-			"name": "User",
+			"name": "Create User",
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -36,10 +36,40 @@
 			"response": []
 		},
 		{
-			"name": "User",
+			"name": "Get User",
 			"request": {
 				"method": "GET",
 				"header": [],
+				"url": {
+					"raw": "http://localhost:5001/api/user/12345",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5001",
+					"path": [
+						"api",
+						"user",
+						"12345"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update User",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Bob Updated\",\n  \"email\": \"bob.updated@bob.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
 					"raw": "http://localhost:5001/api/user/12345",
 					"protocol": "http",
