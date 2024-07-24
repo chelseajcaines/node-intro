@@ -1,16 +1,26 @@
 import express from 'express'
-// import userRouter from './routers/user'
+// web framework for Node.js used to build web applications and APIs
+import userRouter from './routers/user'
 import budgetRouter from './routers/budget'
 
 
 const PORT = process.env.PORT ?? 5001
+// sets the port number on which the server will listen. It uses the value from the 
+// environment variable PORT if it is defined; otherwise, it defaults to 5001
 
 const app = express()
+// creates an instance of an Express application
 
 app.use(express.json())
+// adds a middleware to the application that parses incoming requests with JSON payloads. 
+// This allows the server to handle JSON data in request bodies
 
-// app.use('/api/user', userRouter)
+app.use('/api/user', userRouter)
+// mounts the userRouter at the /api/user path. Any requests to paths that start 
+// with /api/user will be handled by the routes defined in the userRouter
+
 app.use('/api/budget', budgetRouter)
+
 
 /**
  * Exercise:
@@ -29,3 +39,5 @@ app.use('/api/budget', budgetRouter)
  */
 
 app.listen(PORT, () => { console.log(`Server running on port ${PORT}`) })
+// starts the server and makes it listen on the specified port (PORT). When the server starts, it logs a 
+// message to the console indicating that it is running and the port number it is listening on
