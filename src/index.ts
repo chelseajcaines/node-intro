@@ -2,6 +2,7 @@ import express from 'express'
 // web framework for Node.js used to build web applications and APIs
 import userRouter from './routers/user'
 import budgetRouter from './routers/budget'
+import expenseRouter from './routers/expenses'
 
 
 const PORT = process.env.PORT ?? 5001
@@ -20,6 +21,8 @@ app.use('/api/user', userRouter)
 // with /api/user will be handled by the routes defined in the userRouter
 
 app.use('/api/budget', budgetRouter)
+
+app.use('/api/expense', expenseRouter)
 
 
 /**
