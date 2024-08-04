@@ -2,7 +2,7 @@ import express from 'express'
 // web framework for Node.js used to build web applications and APIs
 import demoUserRouter from './routers/demoUser'
 import budgetRouter from './routers/budget'
-import expenseRouter from './routers/expenses'
+import incomeRouter from './routers/income'
 import userRouter from './routers/user'
 
 
@@ -25,7 +25,7 @@ app.use('/api/user', userRouter)
 
 app.use('/api/budget', budgetRouter)
 
-app.use('/api/expense', expenseRouter)
+app.use('/api/income', incomeRouter)
 
 
 /**

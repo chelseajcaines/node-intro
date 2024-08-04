@@ -30,7 +30,7 @@ export const createUser = async (req: Request, res: Response) => {
   
     try {
       const result = await pool.query(
-        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+        'INSERT INTO newusers (name, email) VALUES ($1, $2) RETURNING *',
         [user.name, user.email]
       );
       return res.status(200).json(rest.success(result.rows[0]));
@@ -47,7 +47,7 @@ export const getUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM newusers WHERE id = $1', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json(rest.error('User not found'));
     }
@@ -70,7 +70,7 @@ export const updateUser = async (req: Request, res: Response) => {
 
   try {
     const result = await pool.query(
-      'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
+      'UPDATE newusers SET name = $1, email = $2 WHERE id = $3 RETURNING *',
       [value.name, value.email, id]
     );
     if (result.rows.length === 0) {
@@ -89,7 +89,7 @@ export const deleteUser = async (req: Request, res: Response) => {
   }
 
   try {
-    const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    const result = await pool.query('DELETE FROM newusers WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json(rest.error('User not found'));
     }
