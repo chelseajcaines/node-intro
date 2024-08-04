@@ -1,8 +1,9 @@
 import express from 'express'
 // web framework for Node.js used to build web applications and APIs
-import userRouter from './routers/user'
+import demoUserRouter from './routers/demoUser'
 import budgetRouter from './routers/budget'
 import expenseRouter from './routers/expenses'
+import userRouter from './routers/user'
 
 
 const PORT = process.env.PORT ?? 5001
@@ -16,9 +17,11 @@ app.use(express.json())
 // adds a middleware to the application that parses incoming requests with JSON payloads. 
 // This allows the server to handle JSON data in request bodies
 
-app.use('/api/user', userRouter)
+app.use('/api/demoUser', demoUserRouter)
 // mounts the userRouter at the /api/user path. Any requests to paths that start 
 // with /api/user will be handled by the routes defined in the userRouter
+
+app.use('/api/user', userRouter)
 
 app.use('/api/budget', budgetRouter)
 

@@ -1,7 +1,8 @@
-import { type Request, type Response } from 'express';
+import { Request, Response } from 'express';
 import * as rest from '../utils/rest';
 import Joi from 'joi';
 import pool from '../db';
+
 type email = string;
 
 export interface User {
@@ -17,26 +18,27 @@ const UserSchema = Joi.object<User>({
 });
 
 export const createUser = async (req: Request, res: Response) => {
-  const { error, value } = UserSchema.validate(req.body);
-  if (error !== undefined) {
-    return res.status(400).json(rest.error('User data is not formatted correctly'));
-  }
-
-  const user = value;
-  if ('id' in user) {
-    return res.status(400).json(rest.error('User ID will be generated automatically'));
-  }
-
-  try {
-    const result = await pool.query(
-      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-      [user.name, user.email]
-    );
-    return res.status(200).json(rest.success(result.rows[0]));
-  } catch (err) {
-    return res.status(500).json(rest.error('Error creating user'));
-  }
-};
+    const { error, value } = UserSchema.validate(req.body);
+    if (error !== undefined) {
+      return res.status(400).json(rest.error('User data is not formatted correctly'));
+    }
+  
+    const user = value;
+    if ('id' in user) {
+      return res.status(400).json(rest.error('User ID will be generated automatically'));
+    }
+  
+    try {
+      const result = await pool.query(
+        'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
+        [user.name, user.email]
+      );
+      return res.status(200).json(rest.success(result.rows[0]));
+    } catch (err) {
+      console.error('Error creating user:', err);
+      return res.status(500).json(rest.error('Error creating user'));
+    }
+  };
 
 export const getUser = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);

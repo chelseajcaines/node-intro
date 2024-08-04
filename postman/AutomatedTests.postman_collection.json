@@ -43,7 +43,7 @@
 									}
 								},
 								"url": {
-									"raw": "http://localhost:5001/api/user",
+									"raw": "http://localhost:5001/api/demoUser",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -51,7 +51,7 @@
 									"port": "5001",
 									"path": [
 										"api",
-										"user"
+										"demoUser"
 									]
 								}
 							},
@@ -95,7 +95,7 @@
 									}
 								},
 								"url": {
-									"raw": "http://localhost:5001/api/user",
+									"raw": "http://localhost:5001/api/demoUser",
 									"protocol": "http",
 									"host": [
 										"localhost"
@@ -103,7 +103,7 @@
 									"port": "5001",
 									"path": [
 										"api",
-										"user"
+										"demoUser"
 									]
 								}
 							},

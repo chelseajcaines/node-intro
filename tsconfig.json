@@ -6,8 +6,6 @@
     "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
-    "rootDir": "./src",
-    "typeRoots": ["node_modules/@types"]
   },
   "include": [
     "src/**/*.ts"
@@ -16,5 +14,3 @@
     "node_modules"
   ]
 }
-
-
