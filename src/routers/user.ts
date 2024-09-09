@@ -1,10 +1,11 @@
 import { Router } from 'express'
 import * as UserController from '../controllers/user'
+import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = Router()
 
 router.post('/', UserController.createUser)
-router.get('/:id', UserController.getUser)
+router.get('/:id', authenticateToken, UserController.getUser);
 router.put('/:id', UserController.updateUser)
 router.delete('/:id', UserController.deleteUser)
 

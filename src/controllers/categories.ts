@@ -26,7 +26,7 @@ export const createCategory = async (req: Request, res: Response) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO Categories (name) VALUES ($1) RETURNING *',
+            'INSERT INTO categories_table (name) VALUES ($1) RETURNING *',
             [category.name]
         );
         return res.status(201).json(rest.success(result.rows[0]));
@@ -44,7 +44,7 @@ export const getCategory = async (req: Request, res: Response) => {
     }
 
     try {
-        const result = await pool.query('SELECT * FROM Categories WHERE id = $1', [id]);
+        const result = await pool.query('SELECT * FROM categories_table WHERE id = $1', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json(rest.error('Category not found'));
         }
@@ -68,7 +68,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 
     try {
         const result = await pool.query(
-            'UPDATE Categories SET name = $1 WHERE id = $2 RETURNING *',
+            'UPDATE categories_table SET name = $1 WHERE id = $2 RETURNING *',
             [value.name, id]
         );
         if (result.rows.length === 0) {
@@ -88,7 +88,7 @@ export const deleteCategory = async (req: Request, res: Response) => {
     }
 
     try {
-        const result = await pool.query('DELETE FROM Categories WHERE id = $1 RETURNING *', [id]);
+        const result = await pool.query('DELETE FROM categories_table WHERE id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json(rest.error('Category not found'));
         }

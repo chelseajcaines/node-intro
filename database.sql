@@ -7,12 +7,12 @@ CREATE TABLE IF NOT EXISTS user_table  (
     password_hash VARCHAR(255)
 );
 
-CREATE TABLE IF NOT EXISTS categories (
+CREATE TABLE IF NOT EXISTS categories_table (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS budget (
+CREATE TABLE IF NOT EXISTS budget_table (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL,
     category_id INT NOT NULL,

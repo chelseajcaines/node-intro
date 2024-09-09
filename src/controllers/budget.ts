@@ -30,10 +30,15 @@ export const createBudget = async (req: Request, res: Response) => {
 
     try {
         const result = await pool.query(
-            'INSERT INTO budget (user_id, category_id, amount) VALUES ($1, $2, $3) RETURNING *',
+            'INSERT INTO budget_table (user_id, category_id, amount) VALUES ($1, $2, $3) RETURNING *',
             [budget.user_id, budget.category_id, budget.amount]
         );
-        return res.status(201).json(rest.success(result.rows[0]));
+        
+        // Convert amount to number before returning the response
+        const budgetData = result.rows[0];
+        budgetData.amount = parseFloat(budgetData.amount);
+
+        return res.status(201).json(rest.success(budgetData));
     } catch (err) {
         console.error('Error creating budget:', err);
         return res.status(500).json(rest.error('Error creating budget'));
@@ -48,11 +53,16 @@ export const getBudget = async (req: Request, res: Response) => {
     }
 
     try {
-        const result = await pool.query('SELECT * FROM budget WHERE id = $1', [id]);
+        const result = await pool.query('SELECT * FROM budget_table WHERE id = $1', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json(rest.error('Budget not found'));
         }
-        return res.status(200).json(rest.success(result.rows[0]));
+        
+        // Convert amount to number before returning the response
+        const budgetData = result.rows[0];
+        budgetData.amount = parseFloat(budgetData.amount);
+
+        return res.status(200).json(rest.success(budgetData));
     } catch (err) {
         console.error('Error retrieving budget:', err);
         return res.status(500).json(rest.error('Error retrieving budget'));
@@ -73,7 +83,7 @@ export const updateBudget = async (req: Request, res: Response) => {
 
     try {
         const result = await pool.query(
-            'UPDATE budget SET user_id = $1, category_id = $2, amount = $3 WHERE id = $4 RETURNING *',
+            'UPDATE budget_table SET user_id = $1, category_id = $2, amount = $3 WHERE id = $4 RETURNING *',
             [value.user_id, value.category_id, value.amount, id]
         );
         if (result.rows.length === 0) {
@@ -94,7 +104,7 @@ export const deleteBudget = async (req: Request, res: Response) => {
     }
 
     try {
-        const result = await pool.query('DELETE FROM budget WHERE id = $1 RETURNING *', [id]);
+        const result = await pool.query('DELETE FROM budget_table WHERE id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json(rest.error('Budget not found'));
         }

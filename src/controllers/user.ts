@@ -3,6 +3,7 @@ import * as rest from '../utils/rest';
 import Joi from 'joi';
 import pool from '../db';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 type email = string;
 
@@ -19,6 +20,37 @@ const UserSchema = Joi.object<User>({
   email: Joi.string().email().required(),
   password_hash: Joi.string().required(),
 });
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+export const loginUser = async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json(rest.error('Email and password are required'));
+  }
+
+  try {
+    const result = await pool.query('SELECT * FROM user_table WHERE email = $1', [email]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json(rest.error('User not found'));
+    }
+
+    const user = result.rows[0];
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+    if (!isPasswordValid) {
+      return res.status(401).json(rest.error('Invalid email or password'));
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
+    return res.status(200).json(rest.success({ token }));
+  } catch (err) {
+    console.error('Error logging in user:', err);
+    return res.status(500).json(rest.error('Error logging in user'));
+  }
+};
 
 export const createUser = async (req: Request, res: Response) => {
   const { error, value } = UserSchema.validate(req.body);
@@ -50,6 +82,11 @@ export const getUser = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
   if (Number.isNaN(id)) {
     return res.status(400).json(rest.error('Invalid user ID'));
+  }
+
+  // Compare the ID from the token with the requested user ID (if needed)
+  if (req.user?.id !== id) {
+    return res.status(403).json(rest.error('You do not have access to this user data'));
   }
 
   try {
