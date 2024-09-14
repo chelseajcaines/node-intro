@@ -5,6 +5,7 @@ import { authenticateToken } from '../middleware/authMiddleware';
 const router = Router()
 
 router.post('/', UserController.createUser)
+router.post('/login', UserController.loginUser)
 router.get('/:id', authenticateToken, UserController.getUser);
 router.put('/:id', UserController.updateUser)
 router.delete('/:id', UserController.deleteUser)

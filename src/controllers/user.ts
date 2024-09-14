@@ -11,14 +11,16 @@ export interface User {
   id?: number;
   name: string;
   email: email;
-  password_hash: string;
+  password_hash?: string;
+  password?: string;
 }
 
 const UserSchema = Joi.object<User>({
   id: Joi.number().optional(),
   name: Joi.string().required(),
   email: Joi.string().email().required(),
-  password_hash: Joi.string().required(),
+  password_hash: Joi.string().optional(),
+  password: Joi.string().optional(),
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -45,7 +47,9 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-    return res.status(200).json(rest.success({ token }));
+    // return res.status(200).json(rest.success({ token }));
+    res.cookie('token', token, { httpOnly: true });
+    return res.status(204).json({ message: 'Login successful' });
   } catch (err) {
     console.error('Error logging in user:', err);
     return res.status(500).json(rest.error('Error logging in user'));
@@ -65,13 +69,17 @@ export const createUser = async (req: Request, res: Response) => {
 
   try {
     // Hash the password before storing it
-    const hashedPassword = await bcrypt.hash(user.password_hash, 10);
+    if (user.password === undefined){
+      return res.status(400).json(rest.error('password not in user'));
+    }
+    const hashedPassword = await bcrypt.hash(user.password, 10);
 
     const result = await pool.query(
       'INSERT INTO user_table (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
       [user.name, user.email, hashedPassword]
     );
-    return res.status(201).json(rest.success(result.rows[0]));
+    const login = {email: result.rows[0].email, name: result.rows[0].name}
+    return res.status(201).json(rest.success(login));
   } catch (err) {
     console.error('Error creating user:', err);
     return res.status(500).json(rest.error('Error creating user'));
@@ -112,8 +120,11 @@ export const updateUser = async (req: Request, res: Response) => {
   }
 
   try {
+    if (value.password === undefined){
+      return res.status(400).json(rest.error('password not in user'));
+    }
     // Hash the password before updating it
-    const hashedPassword = await bcrypt.hash(value.password_hash, 10);
+    const hashedPassword = await bcrypt.hash(value.password, 10);
 
     const result = await pool.query(
       'UPDATE user_table SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING *',

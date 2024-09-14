@@ -5,6 +5,7 @@ import budgetRouter from './routers/budget'
 import incomeRouter from './routers/income'
 import userRouter from './routers/user'
 import categoryRouter from './routers/categories'
+import cookieParser from 'cookie-parser';
 
 
 const PORT = process.env.PORT ?? 5001
@@ -15,6 +16,7 @@ const app = express()
 // creates an instance of an Express application
 
 app.use(express.json())
+app.use(cookieParser());
 // adds a middleware to the application that parses incoming requests with JSON payloads. 
 // This allows the server to handle JSON data in request bodies
 
