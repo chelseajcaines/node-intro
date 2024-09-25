@@ -6,6 +6,7 @@ import incomeRouter from './routers/income'
 import userRouter from './routers/user'
 import categoryRouter from './routers/categories'
 import cookieParser from 'cookie-parser';
+import cors from 'cors'
 
 
 const PORT = process.env.PORT ?? 5001
@@ -19,6 +20,15 @@ app.use(express.json())
 app.use(cookieParser());
 // adds a middleware to the application that parses incoming requests with JSON payloads. 
 // This allows the server to handle JSON data in request bodies
+
+
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  }
+
+app.use(cors(corsOptions))
+
 
 app.use('/api/demoUser', demoUserRouter)
 // mounts the userRouter at the /api/user path. Any requests to paths that start 
