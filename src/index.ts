@@ -16,18 +16,15 @@ const PORT = process.env.PORT ?? 5001
 const app = express()
 // creates an instance of an Express application
 
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow requests from this origin
+    credentials: true // Allow credentials such as cookies to be sent
+}));
+
 app.use(express.json())
 app.use(cookieParser());
 // adds a middleware to the application that parses incoming requests with JSON payloads. 
 // This allows the server to handle JSON data in request bodies
-
-
-const corsOptions = {
-    origin: 'http://localhost:3000',
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-  }
-
-app.use(cors(corsOptions))
 
 
 app.use('/api/demoUser', demoUserRouter)

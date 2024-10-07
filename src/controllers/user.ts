@@ -20,7 +20,7 @@ const UserSchema = Joi.object<User>({
   name: Joi.string().required(),
   email: Joi.string().email().required(),
   password_hash: Joi.string().optional(),
-  password: Joi.string().optional(),
+  password: Joi.string().min(6).required(), // Require password and set a minimum length
 });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -49,7 +49,8 @@ export const loginUser = async (req: Request, res: Response) => {
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
     // return res.status(200).json(rest.success({ token }));
     res.cookie('token', token, { httpOnly: true });
-    return res.status(204).json({ message: 'Login successful' });
+    // return res.status(204).json({ message: 'Login successful' });
+    return res.status(200).json({ serviceToken: token, user: { id: user.id, email: user.email } });
   } catch (err) {
     console.error('Error logging in user:', err);
     return res.status(500).json(rest.error('Error logging in user'));
@@ -57,10 +58,12 @@ export const loginUser = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
+  console.log('Incoming request body:', req.body); // Log the incoming request body
   const { error, value } = UserSchema.validate(req.body);
-  if (error !== undefined) {
-    return res.status(400).json(rest.error('User data is not formatted correctly'));
-  }
+if (error) {
+  console.error('Validation error:', error.details); // Log the specific validation error
+  return res.status(400).json(rest.error('User data is not formatted correctly'));
+}
 
   const user = value;
   if ('id' in user) {
