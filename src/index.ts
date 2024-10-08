@@ -7,6 +7,8 @@ import userRouter from './routers/user'
 import categoryRouter from './routers/categories'
 import cookieParser from 'cookie-parser';
 import cors from 'cors'
+import forgotPasswordRouter from './routers/forgot-password'; // Import the forgot password route
+import resetPasswordRouter from './routers/reset-password'; // Import the reset password route
 
 
 const PORT = process.env.PORT ?? 5001
@@ -39,6 +41,9 @@ app.use('/api/income', incomeRouter)
 
 app.use('/api/categories', categoryRouter)
 
+// Mount the forgot password and reset password routes
+app.use('/api/auth', forgotPasswordRouter); // Mounts the forgot password routes at /api/auth/forgot-password
+app.use('/api/auth', resetPasswordRouter); // Mounts the reset password routes at /api/auth/reset-password
 
 /**
  * Exercise:
