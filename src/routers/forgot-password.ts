@@ -20,11 +20,11 @@ router.post('/forgot-password', async (req, res) => {
 
         // Generate a reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
-        const resetTokenExpiration = Date.now() + 3600000; // 1-hour expiration
+        const resetTokenExpiration = Math.floor(Date.now() / 1000) + 3600; // 1-hour expiration in seconds
 
         // Store the reset token and expiration in the database
         await pool.query(
-            'UPDATE user_table SET reset_password_token = $1, reset_password_expiration = $2 WHERE email = $3',
+            'UPDATE user_table SET reset_password_token = $1, reset_password_expiration = to_timestamp($2) WHERE email = $3',
             [resetToken, resetTokenExpiration, email]
         );
 
