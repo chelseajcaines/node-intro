@@ -8,6 +8,10 @@ const router = express.Router();
 router.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
 
+    if (!token) {
+        return res.status(400).json({ message: 'Token is required' });
+    }
+
     try {
         // Query the user by reset token and ensure it's not expired
         const result = await pool.query(
