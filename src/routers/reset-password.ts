@@ -8,15 +8,14 @@ const router = express.Router();
 router.post('/reset-password', async (req, res) => {
     const { token, newPassword } = req.body;
 
-    if (!token) {
-        return res.status(400).json({ message: 'Token is required' });
-    }
-
     try {
+        // Convert current time to seconds (PostgreSQL expects seconds, not milliseconds)
+        const currentTimeInSeconds = Math.floor(Date.now() / 1000);
+
         // Query the user by reset token and ensure it's not expired
         const result = await pool.query(
-            'SELECT * FROM user_table WHERE reset_password_token = $1 AND reset_password_expiration > $2',
-            [token, Date.now()]
+            'SELECT * FROM user_table WHERE reset_password_token = $1 AND reset_password_expiration > to_timestamp($2)',
+            [token, currentTimeInSeconds]  // Use seconds instead of milliseconds
         );
 
         if (result.rows.length === 0) {
