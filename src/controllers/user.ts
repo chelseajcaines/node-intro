@@ -28,6 +28,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
+  // Validate email format first
+  const emailSchema = Joi.string().email().required();
+  const { error } = emailSchema.validate(email);
+  if (error) {
+    return res.status(400).json(rest.error('Invalid email format'));
+  }
+
   if (!email || !password) {
     return res.status(400).json(rest.error('Email and password are required'));
   }
@@ -47,9 +54,8 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-    // return res.status(200).json(rest.success({ token }));
     res.cookie('token', token, { httpOnly: true });
-    // return res.status(204).json({ message: 'Login successful' });
+
     return res.status(200).json({ serviceToken: token, user: { id: user.id, email: user.email } });
   } catch (err) {
     console.error('Error logging in user:', err);
@@ -60,10 +66,11 @@ export const loginUser = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   console.log('Incoming request body:', req.body); // Log the incoming request body
   const { error, value } = UserSchema.validate(req.body);
-if (error) {
-  console.error('Validation error:', error.details); // Log the specific validation error
-  return res.status(400).json(rest.error('User data is not formatted correctly'));
-}
+  
+  if (error) {
+    console.error('Validation error:', error.details); // Log the specific validation error
+    return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
+  }
 
   const user = value;
   if ('id' in user) {
@@ -71,17 +78,25 @@ if (error) {
   }
 
   try {
+    // Check if the email already exists
+    const emailCheck = await pool.query('SELECT * FROM user_table WHERE email = $1', [user.email]);
+    if (emailCheck.rows.length > 0) {
+      return res.status(409).json(rest.error('Email is already in use'));
+    }
+
     // Hash the password before storing it
-    if (user.password === undefined){
+    if (user.password === undefined) {
       return res.status(400).json(rest.error('password not in user'));
     }
+
     const hashedPassword = await bcrypt.hash(user.password, 10);
 
     const result = await pool.query(
       'INSERT INTO user_table (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
       [user.name, user.email, hashedPassword]
     );
-    const login = {email: result.rows[0].email, name: result.rows[0].name}
+    const login = { email: result.rows[0].email, name: result.rows[0].name };
+
     return res.status(201).json(rest.success(login));
   } catch (err) {
     console.error('Error creating user:', err);
@@ -91,22 +106,32 @@ if (error) {
 
 export const getUser = async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
+
+  // First, validate if the user ID is a valid number
   if (Number.isNaN(id)) {
     return res.status(400).json(rest.error('Invalid user ID'));
   }
 
-  // Compare the ID from the token with the requested user ID (if needed)
-  if (req.user?.id !== id) {
-    return res.status(403).json(rest.error('You do not have access to this user data'));
-  }
-
   try {
+    // Query the database to see if the user exists
     const result = await pool.query('SELECT * FROM user_table WHERE id = $1', [id]);
+
+    // If no user is found, return 404
     if (result.rows.length === 0) {
       return res.status(404).json(rest.error('User not found'));
     }
-    return res.status(200).json(rest.success(result.rows[0]));
+
+    const user = result.rows[0];
+
+    // Compare the ID from the token with the requested user ID (for access control)
+    if (req.user?.id !== id) {
+      return res.status(403).json(rest.error('You do not have access to this user data'));
+    }
+
+    // If everything is valid, return the user data
+    return res.status(200).json(rest.success(user));
   } catch (err) {
+    console.error('Error retrieving user:', err);
     return res.status(500).json(rest.error('Error retrieving user'));
   }
 };
