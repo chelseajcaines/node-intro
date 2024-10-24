@@ -104,38 +104,6 @@ export const createUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getUser = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-
-  // First, validate if the user ID is a valid number
-  if (Number.isNaN(id)) {
-    return res.status(400).json(rest.error('Invalid user ID'));
-  }
-
-  try {
-    // Query the database to see if the user exists
-    const result = await pool.query('SELECT * FROM user_table WHERE id = $1', [id]);
-
-    // If no user is found, return 404
-    if (result.rows.length === 0) {
-      return res.status(404).json(rest.error('User not found'));
-    }
-
-    const user = result.rows[0];
-
-    // Compare the ID from the token with the requested user ID (for access control)
-    if (req.user?.id !== id) {
-      return res.status(403).json(rest.error('You do not have access to this user data'));
-    }
-
-    // If everything is valid, return the user data
-    return res.status(200).json(rest.success(user));
-  } catch (err) {
-    console.error('Error retrieving user:', err);
-    return res.status(500).json(rest.error('Error retrieving user'));
-  }
-};
-
 export const updateUser = async (req: Request, res: Response) => {
   const { error, value } = UserSchema.validate(req.body);
   if (error !== undefined) {

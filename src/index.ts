@@ -7,8 +7,8 @@ import userRouter from './routers/user'
 import categoryRouter from './routers/categories'
 import cookieParser from 'cookie-parser';
 import cors from 'cors'
-import forgotPasswordRouter from './routers/forgot-password'; // Import the forgot password route
-import resetPasswordRouter from './routers/reset-password'; // Import the reset password route
+import forgotPasswordRouter from './routers/auth'; // Import the forgot password route
+import resetPasswordRouter from './routers/auth'; // Import the reset password route
 
 
 const PORT = process.env.PORT ?? 5001
