@@ -3,11 +3,11 @@ import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
 import pool from '../db';  // Your PostgreSQL pool
 
-const isStrongPassword = (password: string): boolean => {
-    // Check for minimum length, uppercase, lowercase, number, and special character
-    const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-    return passwordStrengthRegex.test(password);
-};
+// const isStrongPassword = (password: string): boolean => {
+//     // Check for minimum length, uppercase, lowercase, number, and special character
+//     const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+//     return passwordStrengthRegex.test(password);
+// };
 
 // Forgot Password Function
 export const forgotPassword = async (req: any, res: any) => {
@@ -46,7 +46,7 @@ export const forgotPassword = async (req: any, res: any) => {
             }
         });
 
-        const resetURL = `http://localhost:3000/reset-password?token=${resetToken}`;
+        const resetURL = `http://localhost:3002/reset-password?token=${resetToken}`;
         const message = `
             <h1>Password Reset</h1>
             <p>You requested to reset your password. Click the link below:</p>
@@ -83,9 +83,9 @@ export const resetPassword = async (req: any, res: any) => {
     }
 
     // Check if the new password is strong enough
-    if (!isStrongPassword(newPassword)) {
-        return res.status(400).json({ message: 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character.' });
-    }
+    // if (!isStrongPassword(newPassword)) {
+    //     return res.status(400).json({ message: 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character.' });
+    // }
 
     try {
         // Convert current time to seconds (PostgreSQL expects seconds, not milliseconds)
