@@ -40,6 +40,7 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 
   try {
+    // Step 1: Check if the user exists
     const result = await pool.query('SELECT * FROM user_table WHERE email = $1', [email]);
 
     if (result.rows.length === 0) {
@@ -47,19 +48,63 @@ export const loginUser = async (req: Request, res: Response) => {
     }
 
     const user = result.rows[0];
+
+    // Step 2: Validate password
     const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
       return res.status(401).json(rest.error('Invalid email or password'));
     }
 
+    // Step 3: Generate the JWT token
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '1h' });
-    res.cookie('token', token, { httpOnly: true });
 
+    // Step 4: Store the token in the database
+    await pool.query('UPDATE user_table SET session_token = $1 WHERE id = $2', [token, user.id]);
+
+    // Step 5: Send the token as an HTTP-only cookie
+    res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour expiry
+
+    // Return response with the user info and token (if needed)
     return res.status(200).json({ serviceToken: token, user: { id: user.id, email: user.email } });
   } catch (err) {
     console.error('Error logging in user:', err);
     return res.status(500).json(rest.error('Error logging in user'));
+  }
+};
+
+// **Validate Session Function** (the new function)
+export const validateUser = async (req: Request, res: Response) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token found, please log in' });
+  }
+
+  try {
+    // Step 1: Decode the token to get the user ID
+    const decoded: any = jwt.verify(token, JWT_SECRET);
+    const userId = decoded.id;
+
+    // Step 2: Retrieve the user from the database using the user ID
+    const result = await pool.query('SELECT * FROM user_table WHERE id = $1', [userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = result.rows[0];
+
+    // Step 3: Check if the token stored in the database matches the one from the request
+    if (user.session_token !== token) {
+      return res.status(401).json({ message: 'Token mismatch, please log in again' });
+    }
+
+    // If token is valid, send back the user data
+    return res.status(200).json({ user: { id: user.id, email: user.email, name: user.name } });
+  } catch (error) {
+    console.error('Error validating session:', error);
+    return res.status(500).json({ message: 'Failed to validate session' });
   }
 };
 
