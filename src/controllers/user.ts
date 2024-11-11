@@ -63,7 +63,7 @@ export const loginUser = async (req: Request, res: Response) => {
     await pool.query('UPDATE user_table SET session_token = $1 WHERE id = $2', [token, user.id]);
 
     // Step 5: Send the token as an HTTP-only cookie
-    res.cookie('token', token, { httpOnly: true, secure: true, maxAge: 3600000 }); // 1 hour expiry
+    res.cookie('token', token, { httpOnly: true, secure: false, maxAge: 3600000, sameSite: 'lax' }); // 1 hour expiry
 
     // Return response with the user info and token (if needed)
     return res.status(200).json({ serviceToken: token, user: { id: user.id, email: user.email } });
