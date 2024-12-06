@@ -83,7 +83,7 @@ describe('loginUser', () => {
         await userController.loginUser(req, res);
 
         expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.cookie).toHaveBeenCalledWith('token', 'fake-jwt-token', { httpOnly: true });
+        expect(res.cookie).toHaveBeenCalledWith('token', 'fake-jwt-token', { httpOnly: true, secure: false, maxAge: 3600000, sameSite: 'lax' });
         expect(res.json).toHaveBeenCalledWith({ serviceToken: 'fake-jwt-token', user: { id: 1, email: 'test@example.com' } });
     });
 });
