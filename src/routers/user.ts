@@ -8,6 +8,7 @@ router.post('/login', UserController.loginUser)
 router.get('/validate', UserController.validateUser)
 router.put('/:id', UserController.updateUser)
 router.delete('/:id', UserController.deleteUser)
+router.post('/logout', UserController.logoutUser);
 
 /**
  * Exercise:

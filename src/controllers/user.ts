@@ -108,6 +108,30 @@ export const validateUser = async (req: Request, res: Response) => {
   }
 };
 
+export const logoutUser = async (req: Request, res: Response) => {
+  const token = req.cookies.token;
+  if (!token) {
+      return res.status(400).json({ message: 'No token provided' });
+  }
+
+  try {
+      // Decode the token to find the user
+      const decoded: any = jwt.verify(token, JWT_SECRET);
+      const userId = decoded.id;
+
+      // Remove the token from the database
+      await pool.query('UPDATE user_table SET session_token = NULL WHERE id = $1', [userId]);
+
+      // Clear the cookie
+      res.clearCookie('token', { httpOnly: true, secure: false, sameSite: 'lax' });
+
+      return res.status(200).json({ message: 'Logout successful' });
+  } catch (error) {
+      console.error('Error logging out:', error);
+      return res.status(500).json({ message: 'Failed to log out' });
+  }
+};
+
 export const createUser = async (req: Request, res: Response) => {
   console.log('Incoming request body:', req.body); // Log the incoming request body
   const { error, value } = UserSchema.validate(req.body);
