@@ -40,7 +40,7 @@ export const createBudget = async (req: Request, res: Response) => {
     try {
         // Insert into the budget_table
         const result = await pool.query(
-            `INSERT INTO budget_table (name, amount, time, date) VALUES ($1, $2, $3, $4) RETURNING *`,
+            `INSERT INTO budget_table (name, amount, time, date) VALUES ($1, $2, $3, $4::DATE) RETURNING *`,
             [name, amount, time, date]
         );
 
