@@ -3,8 +3,8 @@ import express from 'express'
 import demoUserRouter from './routers/demoUser'
 import budgetRouter from './routers/budget'
 import incomeRouter from './routers/income'
+import expenseRouter from './routers/expense'
 import userRouter from './routers/user'
-import categoryRouter from './routers/categories'
 import cookieParser from 'cookie-parser';
 import cors from 'cors'
 import forgotPasswordRouter from './routers/auth'; // Import the forgot password route
@@ -39,7 +39,7 @@ app.use('/api/budget', budgetRouter)
 
 app.use('/api/income', incomeRouter)
 
-app.use('/api/categories', categoryRouter)
+app.use('/api/expense', expenseRouter)
 
 // Mount the forgot password and reset password routes
 app.use('/api/auth', forgotPasswordRouter); // Mounts the forgot password routes at /api/auth/forgot-password
