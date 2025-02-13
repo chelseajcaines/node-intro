@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS user_table  (
     name VARCHAR(50),
     email VARCHAR(50) UNIQUE,
     password_hash VARCHAR(255),
-    reset_password_token VARCHAR(255),    -- Add this column to store the reset token
-    reset_password_expiration TIMESTAMP -- Add this column to store the expiration time
+    reset_password_token VARCHAR(255),
+    reset_password_expiration TIMESTAMP 
 );
 
 CREATE TABLE IF NOT EXISTS budget_table (
