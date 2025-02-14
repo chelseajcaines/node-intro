@@ -41,3 +41,14 @@ CREATE TABLE IF NOT EXISTS expense_table (
     created_at TIMESTAMP DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS savings_table (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES user_table(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    amount NUMERIC(10,2) NOT NULL,
+    deposit_amount NUMERIC(10,2) NOT NULL,
+    time TEXT NOT NULL CHECK (time IN ('Daily', 'Weekly', 'Bi-Weekly', 'Monthly', 'Yearly')),
+    date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
