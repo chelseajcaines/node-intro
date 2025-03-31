@@ -5,13 +5,13 @@ import pool from '../db';
 
 // Define the Budget interface
 export interface Budget {
-    id?: number;  // Optional since it's auto-generated in PostgreSQL
-    // user_id: number; // Assuming each budget belongs to a user
+    id?: number;  
+    user_id: number; // Required to associate with a user
     name: string;
     amount: number;
     time: string;
     date: string;
-    created_at?: Date; // Optional, defaulted in DB
+    created_at?: Date;
 }
 
 // Define the validation schema for Budget
@@ -19,14 +19,18 @@ const BudgetSchema = Joi.object<Budget>({
     name: Joi.string().min(1).max(255).required(),
     amount: Joi.number().positive().precision(2).required(),
     time: Joi.string().valid('Daily', 'Weekly', 'Monthly', 'Yearly').required(),
-    date: Joi.string().isoDate().required(), // Ensure it's a valid date string (YYYY-MM-DD)
-    // user_id: Joi.number().integer().required() // Required to associate with a user
+    date: Joi.string().isoDate().required()
 });
 
 // Create a new budget
-
 export const createBudget = async (req: Request, res: Response) => {
-    console.log('Incoming request body:', req.body); // Log the incoming request body
+    console.log('Incoming request body:', req.body);
+    console.log('Authenticated User:', req.user); // ✅ Log user info
+
+    if (!req.user || !req.user.id) {
+        console.error('User not found in request');
+        return res.status(401).json(rest.error('User authentication required'));
+    }
 
     // Validate request body
     const { error, value } = BudgetSchema.validate(req.body);
@@ -36,12 +40,12 @@ export const createBudget = async (req: Request, res: Response) => {
     }
 
     const { name, amount, time, date } = value;
+    const userId = req.user.id; // ✅ Use user ID from token
 
     try {
-        // Insert into the budget_table
         const result = await pool.query(
-            `INSERT INTO budget_table (name, amount, time, date) VALUES ($1, $2, $3, $4::DATE) RETURNING *`,
-            [name, amount, time, date]
+            `INSERT INTO budget_table (user_id, name, amount, time, date) VALUES ($1, $2, $3, $4, $5::DATE) RETURNING *`,
+            [userId, name, amount, time, date]
         );
 
         return res.status(201).json(rest.success(result.rows[0]));

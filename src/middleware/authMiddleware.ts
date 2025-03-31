@@ -5,21 +5,25 @@ import * as rest from '../utils/rest';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies.token;
+  console.log('Incoming Cookies:', req.cookies); // ✅ Log cookies
+
+  const token = req.cookies?.token;
 
   if (!token) {
+    console.log('No token found in cookies'); // ✅ Log if no token is found
     return res.status(401).json(rest.error('Token required for authentication'));
   }
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
     if (err) {
+      console.error('JWT Verification Error:', err); // ✅ Log any JWT errors
       if (err.name === 'TokenExpiredError') {
-        return res.status(401).json(rest.error('Token expired')); // Return 401 for expired tokens
+        return res.status(401).json(rest.error('Token expired'));
       }
-      return res.status(401).json(rest.error('Invalid token')); // Return 401 for invalid tokens
+      return res.status(401).json(rest.error('Invalid token'));
     }
 
-    // Save the user data to the request object
+    console.log('Decoded User:', user); // ✅ Log decoded user from JWT
     req.user = user;
     next();
   });
