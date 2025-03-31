@@ -2,52 +2,77 @@ import { Request, Response } from 'express';
 import * as rest from '../utils/rest';
 import Joi from 'joi';
 import pool from '../db';
+import jwt from 'jsonwebtoken';
 
 // Define the Budget interface
 export interface Budget {
-    id?: number;  // Optional since it's auto-generated in PostgreSQL
-    // user_id: number; // Assuming each budget belongs to a user
+    id?: number;
+    user_id: number;
     name: string;
     amount: number;
     time: string;
     date: string;
-    created_at?: Date; // Optional, defaulted in DB
+    created_at?: Date;
 }
 
-// Define the validation schema for Budget
-const BudgetSchema = Joi.object<Budget>({
+// Budget Schema Validation
+const BudgetSchema = Joi.object({
     name: Joi.string().min(1).max(255).required(),
     amount: Joi.number().positive().precision(2).required(),
     time: Joi.string().valid('Daily', 'Weekly', 'Monthly', 'Yearly').required(),
-    date: Joi.string().isoDate().required(), // Ensure it's a valid date string (YYYY-MM-DD)
-    // user_id: Joi.number().integer().required() // Required to associate with a user
+    date: Joi.string().isoDate().required(),
 });
 
+const getUserIdFromToken = (req: Request): number | null => {
+    const token = req.cookies.token;
+    if (!token) return null;
+    try {
+        const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        return decoded.id;
+    } catch (error) {
+        return null;
+    }
+};
+
 // Create a new budget
-
 export const createBudget = async (req: Request, res: Response) => {
-    console.log('Incoming request body:', req.body); // Log the incoming request body
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
 
-    // Validate request body
     const { error, value } = BudgetSchema.validate(req.body);
     if (error) {
-        console.error('Validation error:', error.details);
-        return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
+        return res.status(400).json(rest.error('Invalid budget data'));
     }
 
     const { name, amount, time, date } = value;
 
     try {
-        // Insert into the budget_table
         const result = await pool.query(
-            `INSERT INTO budget_table (name, amount, time, date) VALUES ($1, $2, $3, $4::DATE) RETURNING *`,
-            [name, amount, time, date]
+            `INSERT INTO budget_table (user_id, name, amount, time, date) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+            [userId, name, amount, time, date]
         );
-
         return res.status(201).json(rest.success(result.rows[0]));
     } catch (err) {
         console.error('Error saving budget:', err);
         return res.status(500).json(rest.error('Error saving budget'));
+    }
+};
+
+// Get budgets for the logged-in user
+export const getBudget = async (req: Request, res: Response) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
+
+    try {
+        const result = await pool.query('SELECT * FROM budget_table WHERE user_id = $1', [userId]);
+        return res.status(200).json(rest.success(result.rows));
+    } catch (err) {
+        console.error('Error retrieving budgets:', err);
+        return res.status(500).json(rest.error('Error retrieving budgets'));
     }
 };
 
