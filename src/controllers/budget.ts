@@ -28,8 +28,10 @@ const getUserIdFromToken = (req: Request): number | null => {
     if (!token) return null;
     try {
         const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+        console.log('Decoded token:', decoded);
         return decoded.id;
     } catch (error) {
+        console.error('Token verification error:', error);
         return null;
     }
 };
@@ -76,97 +78,30 @@ export const getBudget = async (req: Request, res: Response) => {
     }
 };
 
-// export const createBudget = async (req: Request, res: Response) => {
-//     const { error, value } = BudgetSchema.validate(req.body);
-//     if (error) {
-//         return res.status(400).json(rest.error('Budget data is not formatted correctly'));
-//     }
+export const deleteBudget = async (req: Request, res: Response) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
 
-//     const budget = value;
+    const budgetId = parseInt(req.params.id); // Get the budgetId from the route parameter
 
-//     try {
-//         const result = await pool.query(
-//             'INSERT INTO budget_table (user_id, category_id, amount) VALUES ($1, $2, $3) RETURNING *',
-//             [budget.user_id, budget.category_id, budget.amount]
-//         );
-        
-//         // Convert amount to number before returning the response
-//         const budgetData = result.rows[0];
-//         budgetData.amount = parseFloat(budgetData.amount);
+    try {
+        // Update the query to check both the user_id and the budget_id
+        const result = await pool.query(
+            'DELETE FROM budget_table WHERE id = $1 AND user_id = $2 RETURNING *',
+            [budgetId, userId]
+        );
 
-//         return res.status(201).json(rest.success(budgetData));
-//     } catch (err) {
-//         console.error('Error creating budget:', err);
-//         return res.status(500).json(rest.error('Error creating budget'));
-//     }
-// };
+        // If no rows were deleted, it means the budget was not found or doesn't belong to the user
+        if (result.rowCount === 0) {
+            console.log(`No budget found for userId ${userId} and budgetId ${budgetId}`);
+            return res.status(404).json(rest.error('Budget not found or unauthorized'));
+        }
 
-// Get a budget by ID
-// export const getBudget = async (req: Request, res: Response) => {
-//     const id = parseInt(req.params.id);
-//     if (isNaN(id)) {
-//         return res.status(400).json(rest.error('Invalid budget ID'));
-//     }
-
-//     try {
-//         const result = await pool.query('SELECT * FROM budget_table WHERE id = $1', [id]);
-//         if (result.rows.length === 0) {
-//             return res.status(404).json(rest.error('Budget not found'));
-//         }
-        
-//         // Convert amount to number before returning the response
-//         const budgetData = result.rows[0];
-//         budgetData.amount = parseFloat(budgetData.amount);
-
-//         return res.status(200).json(rest.success(budgetData));
-//     } catch (err) {
-//         console.error('Error retrieving budget:', err);
-//         return res.status(500).json(rest.error('Error retrieving budget'));
-//     }
-// };
-
-// Update a budget by ID
-// export const updateBudget = async (req: Request, res: Response) => {
-//     const { error, value } = BudgetSchema.validate(req.body);
-//     if (error) {
-//         return res.status(400).json(rest.error('Budget data is not formatted correctly'));
-//     }
-
-//     const id = parseInt(req.params.id);
-//     if (isNaN(id)) {
-//         return res.status(400).json(rest.error('Invalid budget ID'));
-//     }
-
-//     try {
-//         const result = await pool.query(
-//             'UPDATE budget_table SET user_id = $1, category_id = $2, amount = $3 WHERE id = $4 RETURNING *',
-//             [value.user_id, value.category_id, value.amount, id]
-//         );
-//         if (result.rows.length === 0) {
-//             return res.status(404).json(rest.error('Budget not found'));
-//         }
-//         return res.status(200).json(rest.success(result.rows[0]));
-//     } catch (err) {
-//         console.error('Error updating budget:', err);
-//         return res.status(500).json(rest.error('Error updating budget'));
-//     }
-// };
-
-// Delete a budget by ID
-// export const deleteBudget = async (req: Request, res: Response) => {
-//     const id = parseInt(req.params.id);
-//     if (isNaN(id)) {
-//         return res.status(400).json(rest.error('Invalid budget ID'));
-//     }
-
-//     try {
-//         const result = await pool.query('DELETE FROM budget_table WHERE id = $1 RETURNING *', [id]);
-//         if (result.rows.length === 0) {
-//             return res.status(404).json(rest.error('Budget not found'));
-//         }
-//         return res.status(200).json(rest.success({ message: 'Budget deleted successfully' }));
-//     } catch (err) {
-//         console.error('Error deleting budget:', err);
-//         return res.status(500).json(rest.error('Error deleting budget'));
-//     }
-// };
+        return res.status(200).json(rest.success('Budget deleted successfully'));
+    } catch (err) {
+        console.error('Error deleting budget:', err);
+        return res.status(500).json(rest.error('Error deleting budget'));
+    }
+};

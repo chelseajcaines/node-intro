@@ -5,7 +5,6 @@ const router = Router()
 
 router.post('/', ExpenseController.createExpense)
 router.get('/', ExpenseController.getExpense)
-// router.put('/:id', IncomeController.updateIncome)
-// router.delete('/:id', IncomeController.deleteIncome)
+router.delete('/:id', ExpenseController.deleteExpense);
 
 export default router

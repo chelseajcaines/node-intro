@@ -5,5 +5,6 @@ const router = Router()
 
 router.post('/', BudgetController.createBudget)
 router.get('/', BudgetController.getBudget);
+router.delete('/:id', BudgetController.deleteBudget);
 
 export default router

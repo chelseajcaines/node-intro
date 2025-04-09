@@ -82,3 +82,31 @@ export const getExpense = async (req: Request, res: Response) => {
         return res.status(500).json(rest.error('Error retrieving expense'));
     }
 };
+
+export const deleteExpense = async (req: Request, res: Response) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
+
+    const expenseId = parseInt(req.params.id);
+
+    try {
+        // Update the query to check both the user_id and the budget_id
+        const result = await pool.query(
+            'DELETE FROM expense_table WHERE id = $1 AND user_id = $2 RETURNING *',
+            [expenseId, userId]
+        );
+
+        // If no rows were deleted, it means the budget was not found or doesn't belong to the user
+        if (result.rowCount === 0) {
+            console.log(`No expense found for userId ${userId} and expenseId ${expenseId}`);
+            return res.status(404).json(rest.error('Expense not found or unauthorized'));
+        }
+
+        return res.status(200).json(rest.success('Expense deleted successfully'));
+    } catch (err) {
+        console.error('Error deleting expense:', err);
+        return res.status(500).json(rest.error('Error deleting expense'));
+    }
+};
