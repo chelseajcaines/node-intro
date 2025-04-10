@@ -110,3 +110,48 @@ export const deleteExpense = async (req: Request, res: Response) => {
         return res.status(500).json(rest.error('Error deleting expense'));
     }
 };
+
+export const updateExpense = async (req: Request, res: Response) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
+
+    const expenseId = parseInt(req.params.id);
+    if (isNaN(expenseId)) {
+        return res.status(400).json(rest.error('Invalid expense ID'));
+    }
+
+    // Validate incoming data
+    const { error, value } = ExpenseSchema.validate(req.body);
+    if (error) {
+        console.error('Validation error:', error.details);
+        return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
+    }
+
+    const { category, location, amount, date, payment, deduction } = value;
+
+    try {
+        const result = await pool.query(
+            `UPDATE expense_table
+             SET category = $1,
+                 location = $2,
+                 amount = $3,
+                 date = $4::DATE,
+                 payment = $5,
+                 deduction = $6
+             WHERE id = $7 AND user_id = $8
+             RETURNING *`,
+            [category, location, amount, date, payment, deduction, expenseId, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json(rest.error('Expense not found or unauthorized'));
+        }
+
+        return res.status(200).json(rest.success(result.rows[0]));
+    } catch (err) {
+        console.error('Error updating expense:', err);
+        return res.status(500).json(rest.error('Error updating expense'));
+    }
+};

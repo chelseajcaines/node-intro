@@ -105,3 +105,46 @@ export const deleteBudget = async (req: Request, res: Response) => {
         return res.status(500).json(rest.error('Error deleting budget'));
     }
 };
+
+export const updateBudget = async (req: Request, res: Response) => {
+    const userId = getUserIdFromToken(req);
+    if (!userId) {
+        return res.status(401).json(rest.error('Unauthorized: Please log in'));
+    }
+
+    const budgetId = parseInt(req.params.id);
+    if (isNaN(budgetId)) {
+        return res.status(400).json(rest.error('Invalid budget ID'));
+    }
+
+    // Validate incoming data
+    const { error, value } = BudgetSchema.validate(req.body);
+    if (error) {
+        console.error('Validation error:', error.details);
+        return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
+    }
+
+    const { name, amount, time, date } = value;
+
+    try {
+        const result = await pool.query(
+            `UPDATE budget_table
+             SET name = $1,
+                 amount = $2,
+                 time = $3,
+                 date = $4::DATE
+             WHERE id = $5 AND user_id = $6
+             RETURNING *`,
+            [name, amount, time, date, budgetId, userId]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json(rest.error('Budget not found or unauthorized'));
+        }
+
+        return res.status(200).json(rest.success(result.rows[0]));
+    } catch (err) {
+        console.error('Error updating budget:', err);
+    return res.status(500).json(rest.error('Error updating budget'));
+    }
+};
