@@ -48,10 +48,13 @@ export const forgotPassword = async (req: any, res: any) => {
 
         const resetURL = `http://localhost:3000/reset-password?token=${resetToken}`;
         const message = `
-            <h1>Password Reset</h1>
-            <p>You requested to reset your password. Click the link below:</p>
-            <a href="${resetURL}" target="_blank">${resetURL}</a>
-        `;
+    <div style="font-family: Arial, sans-serif; text-align: center;">
+        <img src="https://yourdomain.com/path-to-your-logo.png" alt="Your Logo" style="max-width: 200px; margin-bottom: 20px;" />
+        <h2>Click below to reset your password.</h2>
+        <p>Link will expire after 1 hour.</p>
+        <a href="${resetURL}" target="_blank" style="display: inline-block; margin-top: 10px; color: #fff; background-color: #007BFF; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+    </div>
+`;
 
         await transporter.sendMail({
             to: user.email,
@@ -81,20 +84,16 @@ export const resetPassword = async (req: any, res: any) => {
     if (!newPassword) {
         return res.status(400).json({ message: 'New password is required.' });
     }
-
-    // Check if the new password is strong enough
-    // if (!isStrongPassword(newPassword)) {
-    //     return res.status(400).json({ message: 'Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a number, and a special character.' });
-    // }
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    }
 
     try {
-        // Convert current time to seconds (PostgreSQL expects seconds, not milliseconds)
         const currentTimeInSeconds = Math.floor(Date.now() / 1000);
 
-        // Query the user by reset token and ensure it's not expired
         const result = await pool.query(
             'SELECT * FROM user_table WHERE reset_password_token = $1 AND reset_password_expiration > to_timestamp($2)',
-            [token, currentTimeInSeconds]  // Use seconds instead of milliseconds
+            [token, currentTimeInSeconds]
         );
 
         if (result.rows.length === 0) {
@@ -102,11 +101,8 @@ export const resetPassword = async (req: any, res: any) => {
         }
 
         const user = result.rows[0];
-
-        // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update the user's password and clear the reset token and expiration
         await pool.query(
             'UPDATE user_table SET password_hash = $1, reset_password_token = NULL, reset_password_expiration = NULL WHERE id = $2',
             [hashedPassword, user.id]

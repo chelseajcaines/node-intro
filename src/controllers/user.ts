@@ -4,6 +4,7 @@ import Joi from 'joi';
 import pool from '../db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import dns from 'dns/promises';
 
 type email = string;
 
@@ -133,27 +134,43 @@ export const logoutUser = async (req: Request, res: Response) => {
 };
 
 export const createUser = async (req: Request, res: Response) => {
-  console.log('Incoming request body:', req.body); // Log the incoming request body
+  console.log('Incoming request body:', req.body);
   const { error, value } = UserSchema.validate(req.body);
-  
-  if (error) {
-    console.error('Validation error:', error.details); // Log the specific validation error
-    return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
-  }
 
   const user = value;
   if ('id' in user) {
     return res.status(400).json(rest.error('User ID will be generated automatically'));
   }
 
+  // ✅ MX record check for email domain
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(user.email)) {
+    return res.status(400).json(rest.error('Invalid email format.'));
+  }
+
+  const domain = user.email.split('@')[1];
+  try {
+    const mxRecords = await dns.resolveMx(domain);
+    if (!mxRecords || mxRecords.length === 0) {
+      return res.status(400).json(rest.error('Email domain is not accepting mail.'));
+    }
+  } catch (err) {
+    console.error('DNS MX lookup failed:', err);
+    return res.status(400).json(rest.error('Invalid email domain.'));
+  }
+
+  if (error) {
+    console.error('Validation error:', error.details);
+    return res.status(400).json(rest.error('Password must be at least 6 characters.'));
+  }
+
   try {
     // Check if the email already exists
     const emailCheck = await pool.query('SELECT * FROM user_table WHERE email = $1', [user.email]);
     if (emailCheck.rows.length > 0) {
-      return res.status(409).json(rest.error('Email is already in use'));
+      return res.status(409).json(rest.error('An account with this email already exists.'));
     }
 
-    // Hash the password before storing it
     if (user.password === undefined) {
       return res.status(400).json(rest.error('password not in user'));
     }
@@ -164,8 +181,8 @@ export const createUser = async (req: Request, res: Response) => {
       'INSERT INTO user_table (name, email, password_hash) VALUES ($1, $2, $3) RETURNING *',
       [user.name, user.email, hashedPassword]
     );
-    const login = { email: result.rows[0].email, name: result.rows[0].name };
 
+    const login = { email: result.rows[0].email, name: result.rows[0].name };
     return res.status(201).json(rest.success(login));
   } catch (err) {
     console.error('Error creating user:', err);
@@ -201,22 +218,5 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.status(200).json(rest.success(result.rows[0]));
   } catch (err) {
     return res.status(500).json(rest.error('Error updating user'));
-  }
-};
-
-export const deleteUser = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  if (Number.isNaN(id)) {
-    return res.status(400).json(rest.error('Invalid user ID'));
-  }
-
-  try {
-    const result = await pool.query('DELETE FROM user_table WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) {
-      return res.status(404).json(rest.error('User not found'));
-    }
-    return res.status(200).json(rest.success({ message: 'User deleted successfully' }));
-  } catch (err) {
-    return res.status(500).json(rest.error('Error deleting user'));
   }
 };
