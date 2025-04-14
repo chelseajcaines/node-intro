@@ -184,32 +184,20 @@ export const createUser = async (req: Request, res: Response) => {
       [user.name, user.email, hashedPassword]
     );
 
-    console.log('Full insert result:', result);
+    console.log('Insert result:', result.rows);
 
-  if (!result.rows || result.rows.length === 0) {
+    // ✅ Fallback check for insert failure
+    if (!result.rows || result.rows.length === 0) {
     console.error('Insert returned no rows.');
     return res.status(500).json(rest.error('User was not created'));
+    }
+
+    const login = { email: result.rows[0].email, name: result.rows[0].name };
+    return res.status(201).json(rest.success(login));
+  } catch (err) {
+    console.error('Error creating user:', err);
+    return res.status(500).json(rest.error('Error creating user'));
   }
-
-  const newUser = result.rows[0];
-
-  const login = {
-    email: newUser.email,
-    name: newUser.name
-  };
-
-  return res.status(201).json(rest.success(login));
-} catch (err) {
-  console.error('Error during insert query:', err);
-  return res.status(500).json(rest.error('Database error during user creation.'));
-}
-
-  //   const login = { email: result.rows[0].email, name: result.rows[0].name };
-  //   return res.status(201).json(rest.success(login));
-  // } catch (err) {
-  //   console.error('Error creating user:', err);
-  //   return res.status(500).json(rest.error('Error creating user'));
-  // }
 };
 
 export const updateUser = async (req: Request, res: Response) => {
