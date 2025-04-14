@@ -104,29 +104,49 @@ describe('createUser', () => {
     });
 
     it('should return 409 if email already exists', async () => {
-        let db = jest.requireMock('../../src/db')
-        db.query.mockResolvedValueOnce({ rows: [{ email: 'test@example.com' }] });
-        const req = mockRequest({ name: 'Test', email: 'test@example.com', password: 'password' });
+        let db = jest.requireMock('../../src/db');
+        db.query.mockResolvedValueOnce({ rows: [{ email: 'test@example.com' }] }); // Mock email check
+
+        const req = mockRequest({ name: 'Test', email: 'test@example.com', password: 'securePass123' });
         const res = mockResponse();
 
         await userController.createUser(req, res);
 
         expect(res.status).toHaveBeenCalledWith(409);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Email is already in use', status: 'error' });
+        expect(res.json).toHaveBeenCalledWith({ message: 'An account with this email already exists.', status: 'error' });
     });
 
-    it('should create user and return 201 on success', async () => {
-        let db = jest.requireMock('../../src/db')
-        db.query
-            .mockResolvedValueOnce({ rows: [] }) // Check if email exists
-            .mockResolvedValueOnce({ rows: [{ email: 'test@example.com', name: 'Test' }] }); // Insert user
+    it('should return 400 if email domain is invalid (no MX record)', async () => {
+        let db = jest.requireMock('../../src/db');
+        db.query.mockResolvedValueOnce({ rows: [] }); // no existing user
 
-        const req = mockRequest({ name: 'Test', email: 'test@example.com', password: 'password' });
+        jest.spyOn(require('dns/promises'), 'resolveMx').mockRejectedValueOnce(new Error('No MX'));
+
+        const req = mockRequest({ name: 'Test', email: 'fake@nonexistentdomain.abc', password: 'securePass123' });
+        const res = mockResponse();
+
+        await userController.createUser(req, res);
+
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.json).toHaveBeenCalledWith({ message: 'Invalid email domain.', status: 'error' });
+    });
+
+    it('should return 201 if user is created successfully', async () => {
+        let db = jest.requireMock('../../src/db');
+        db.query
+            .mockResolvedValueOnce({ rows: [] }) // email check
+            .mockResolvedValueOnce({ rows: [{ name: 'Test', email: 'test@example.com' }] }); // insert result
+
+        jest.spyOn(require('dns/promises'), 'resolveMx').mockResolvedValueOnce([{ exchange: 'mail.example.com', priority: 10 }]);
+
+        (bcrypt.hash as jest.Mock).mockResolvedValueOnce('hashedPassword');
+
+        const req = mockRequest({ name: 'Test', email: 'test@example.com', password: 'securePass123' });
         const res = mockResponse();
 
         await userController.createUser(req, res);
 
         expect(res.status).toHaveBeenCalledWith(201);
-        expect(res.json).toHaveBeenCalledWith({ status: 'success', data: { email: 'test@example.com', name: 'Test' } });
+        expect(res.json).toHaveBeenCalledWith({ message: { email: 'test@example.com', name: 'Test' }, status: 'success' });
     });
 });
