@@ -184,14 +184,6 @@ export const createUser = async (req: Request, res: Response) => {
       [user.name, user.email, hashedPassword]
     );
 
-    console.log('Insert result:', result.rows);
-
-    // ✅ Fallback check for insert failure
-    if (!result.rows || result.rows.length === 0) {
-    console.error('Insert returned no rows.');
-    return res.status(500).json(rest.error('User was not created'));
-    }
-
     const login = { email: result.rows[0].email, name: result.rows[0].name };
     return res.status(201).json(rest.success(login));
   } catch (err) {
