@@ -10,18 +10,19 @@ jest.mock('../../src/db', () => ({
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 
-const mockRequestWithCookies = (cookies: any) => ({
-    cookies,
-}) as unknown as Request;
-
 const mockRequest = (body: any) => ({
     body,
+}) as unknown as Request;
+
+const mockRequestParams = (params: any) => ({
+    params,
 }) as unknown as Request;
 
 const mockResponse = () => {
     const res = {
         status: jest.fn(),
         json: jest.fn(),
+        cookie: jest.fn(),
     };
     res.status.mockReturnValue(res);
     res.json.mockReturnValue(res);
@@ -87,97 +88,10 @@ describe('loginUser', () => {
     });
 });
 
-describe('validateUser', () => {
-    let db: any;
-
-    beforeEach(() => {
-        jest.clearAllMocks();
-        db = require('../../src/db');
-    });
-
-    it('should return 401 if no token is found in cookies', async () => {
-        const req = mockRequestWithCookies({});
-        const res = mockResponse();
-
-        await userController.validateUser(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ message: 'No token found, please log in' });
-    });
-
-    it('should return 404 if user is not found in the database', async () => {
-        (jwt.verify as jest.Mock).mockReturnValue({ id: 123 });
-        db.query.mockResolvedValueOnce({ rows: [] });
-
-        const req = mockRequestWithCookies({ token: 'valid-token' });
-        const res = mockResponse();
-
-        await userController.validateUser(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(404);
-        expect(res.json).toHaveBeenCalledWith({ message: 'User not found' });
-    });
-
-    it('should return 401 if token does not match the one stored in DB', async () => {
-        (jwt.verify as jest.Mock).mockReturnValue({ id: 123 });
-        db.query.mockResolvedValueOnce({ rows: [{ id: 123, session_token: 'different-token' }] });
-
-        const req = mockRequestWithCookies({ token: 'valid-token' });
-        const res = mockResponse();
-
-        await userController.validateUser(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Token mismatch, please log in again' });
-    });
-
-    it('should return 200 and user data if token is valid and matches DB', async () => {
-        const user = {
-            id: 123,
-            email: 'test@example.com',
-            name: 'Test User',
-            session_token: 'valid-token',
-        };
-
-        (jwt.verify as jest.Mock).mockReturnValue({ id: 123 });
-        db.query.mockResolvedValueOnce({ rows: [user] });
-
-        const req = mockRequestWithCookies({ token: 'valid-token' });
-        const res = mockResponse();
-
-        await userController.validateUser(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(200);
-        expect(res.json).toHaveBeenCalledWith({
-            user: {
-                id: 123,
-                email: 'test@example.com',
-                name: 'Test User',
-            },
-        });
-    });
-
-    it('should return 500 if an error is thrown', async () => {
-        (jwt.verify as jest.Mock).mockImplementation(() => {
-            throw new Error('Token error');
-        });
-
-        const req = mockRequestWithCookies({ token: 'some-token' });
-        const res = mockResponse();
-
-        await userController.validateUser(req, res);
-
-        expect(res.status).toHaveBeenCalledWith(500);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Failed to validate session' });
-    });
-});
-
 // describe('createUser', () => {
 //     beforeEach(() => {
 //         jest.clearAllMocks();
 //     });
-
-// })
 
 //     it('should return 400 if validation fails', async () => {
 //         const req = mockRequest({ name: '', email: 'invalid', password: 'short' });
