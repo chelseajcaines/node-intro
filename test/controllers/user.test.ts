@@ -100,7 +100,7 @@ describe('createUser', () => {
         await userController.createUser(req, res);
 
         expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.json).toHaveBeenCalledWith({ message: 'Please ensure all fields are filled out correctly', status: 'error' });
+        expect(res.json).toHaveBeenCalledWith({ message: 'Invalid email format.' , status: 'error' });
     });
 
     it('should return 409 if email already exists', async () => {

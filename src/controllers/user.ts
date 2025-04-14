@@ -137,17 +137,24 @@ export const createUser = async (req: Request, res: Response) => {
   console.log('Incoming request body:', req.body);
   const { error, value } = UserSchema.validate(req.body);
 
+  if (error) {
+    console.error('Validation error:', error.details);
+    return res.status(400).json(rest.error('Please ensure all fields are filled out correctly'));
+  }
+
   const user = value;
+
   if ('id' in user) {
     return res.status(400).json(rest.error('User ID will be generated automatically'));
   }
 
-  // ✅ MX record check for email domain
+  // ✅ Email format check
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(user.email)) {
     return res.status(400).json(rest.error('Invalid email format.'));
   }
 
+  // ✅ MX record check for email domain
   const domain = user.email.split('@')[1];
   try {
     const mxRecords = await dns.resolveMx(domain);
@@ -159,11 +166,6 @@ export const createUser = async (req: Request, res: Response) => {
     return res.status(400).json(rest.error('Invalid email domain.'));
   }
 
-  if (error) {
-    console.error('Validation error:', error.details);
-    return res.status(400).json(rest.error('Password must be at least 6 characters.'));
-  }
-
   try {
     // Check if the email already exists
     const emailCheck = await pool.query('SELECT * FROM user_table WHERE email = $1', [user.email]);
@@ -172,7 +174,7 @@ export const createUser = async (req: Request, res: Response) => {
     }
 
     if (user.password === undefined) {
-      return res.status(400).json(rest.error('password not in user'));
+      return res.status(400).json(rest.error('Password not provided'));
     }
 
     const hashedPassword = await bcrypt.hash(user.password, 10);
