@@ -212,11 +212,13 @@ export const updateUser = async (req: Request, res: Response) => {
       'UPDATE user_table SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING *',
       [value.name, value.email, hashedPassword, id]
     );
-    if (result.rows.length === 0) {
+    const updatedUser = result.rows;
+    if (!updatedUser) {
       return res.status(404).json(rest.error('User not found'));
     }
-    return res.status(200).json(rest.success(result.rows[0]));
+    return res.status(200).json(rest.success(updatedUser));
   } catch (err) {
+    console.error('🔥 Error in updateUser:', err);
     return res.status(500).json(rest.error('Error updating user'));
   }
 };
