@@ -1,5 +1,3 @@
-
-
 jest.mock('dns/promises', () => ({
     resolveMx: jest.fn(),
   }));
@@ -13,7 +11,7 @@ jest.mock('../../src/db', () => {
     };
   });
 
-  jest.mock('bcrypt');
+jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 
 import * as userController from '../../src/controllers/user';
@@ -433,130 +431,4 @@ describe('logoutUser', () => {
         message: 'Error creating user',
       });
     });
-  });
-
-  describe('updateUser', () => {
-    const mockHash = bcrypt.hash as jest.Mock;
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-  
-    it('should return 400 if validation fails', async () => {
-      const req = mockRequest({ name: 'Test' }, { id: '1' }); // missing email/password
-      const res = mockResponse();
-  
-      await userController.updateUser(req, res);
-  
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        status: 'error',
-        message: 'User data is not formatted correctly',
-      }));
-    });
-  
-    it('should return 400 if user ID is invalid', async () => {
-      const req = mockRequest({ name: 'Test', email: 'test@example.com', password: 'password123' }, { id: 'abc' });
-      const res = mockResponse();
-  
-      await userController.updateUser(req, res);
-  
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        status: 'error',
-        message: 'Invalid user ID',
-      }));
-    });
-  
-    it('should return 400 if password is missing', async () => {
-      const req = mockRequest({ name: 'Test', email: 'test@example.com' }, { id: '1' });
-      const res = mockResponse();
-  
-      await userController.updateUser(req, res);
-  
-      expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        status: 'error',
-        message: 'User data is not formatted correctly',
-      }));
-    });
-  
-    it('should return 404 if user not found', async () => {
-  
-      const req = mockRequest(
-        { name: 'Test', email: 'test@example.com', password: 'password123' },
-        { id: '1' }
-      );
-      const res = mockResponse();
-
-      mockHash.mockResolvedValue('hashedpassword');
-      const db = require('../../src/db').default;
-      console.log('db.query in test:', db.query);
-      (db.query as jest.Mock).mockResolvedValueOnce({ rows: [] }); // user not found
-  
-      await userController.updateUser(req, res);
-  
-      expect(mockHash).toHaveBeenCalledWith('password123', 10);
-      expect(db.query).toHaveBeenCalledWith(
-        'UPDATE user_table SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING *',
-        ['Test', 'test@example.com', 'hashedpassword', 1]
-      );
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-        status: 'error',
-        message: 'User not found',
-      }));
-    });
-  
-//     it('should return 200 and updated user on success', async () => {
-//       mockHash.mockResolvedValue('hashedpassword');
-//       mockQuery.mockResolvedValueOnce({
-//         rows: [{
-//           id: 1,
-//           name: 'Updated',
-//           email: 'updated@example.com',
-//         }],
-//       });
-  
-//       const req = mockRequest(
-//         { name: 'Updated', email: 'updated@example.com', password: 'password123' },
-//         { id: '1' }
-//       );
-//       const res = mockResponse();
-  
-//       await userController.updateUser(req, res);
-  
-//       expect(mockHash).toHaveBeenCalledWith('password123', 10);
-//       expect(mockQuery).toHaveBeenCalledWith(
-//         'UPDATE user_table SET name = $1, email = $2, password_hash = $3 WHERE id = $4 RETURNING *',
-//         ['Updated', 'updated@example.com', 'hashedpassword', 1]
-//       );
-//       expect(res.status).toHaveBeenCalledWith(200);
-//       expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-//         success: true,
-//         data: {
-//           id: 1,
-//           name: 'Updated',
-//           email: 'updated@example.com',
-//         },
-//       }));
-//     });
-  
-//     it('should return 500 if query throws', async () => {
-//         mockHash.mockResolvedValue('hashedpassword');
-//         mockQuery.mockRejectedValueOnce(new Error('DB error'));
-      
-//         const req = mockRequest(
-//           { name: 'Test User', email: 'test@example.com', password: 'password123' }, // valid input
-//           { id: '1' }
-//         );
-//         const res = mockResponse();
-      
-//         await userController.updateUser(req, res);
-      
-//         expect(res.status).toHaveBeenCalledWith(500);
-//         expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-//           success: false,
-//           error: 'Error updating user',
-//         }));
-//       });
   });

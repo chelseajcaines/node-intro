@@ -3,12 +3,6 @@ import nodemailer from 'nodemailer';
 import bcrypt from 'bcrypt';
 import pool from '../db';  // Your PostgreSQL pool
 
-// const isStrongPassword = (password: string): boolean => {
-//     // Check for minimum length, uppercase, lowercase, number, and special character
-//     const passwordStrengthRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-//     return passwordStrengthRegex.test(password);
-// };
-
 // Forgot Password Function
 export const forgotPassword = async (req: any, res: any) => {
     const { email } = req.body;
